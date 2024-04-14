@@ -1,44 +1,34 @@
-# This workflow is for a nightly run against WildFly upstream
-
-name: Manual RESTEasy Build
-
-on:
-  workflow_dispatch:
-    inputs:
-      os:
-        description: "Runner OS"
-        required: true
-        default: "ubuntu-latest"
-        type: string
-      javaVersion:
-        description: "Java Version"
-        required: true
-        default: "17"
-        type: string
-
 jobs:
   build:
-    runs-on: ${{ inputs.os }}
-
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK ${{ inputs.javaVersion }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ inputs.javaVersion }}
-          distribution: 'temurin'
-          cache: 'maven'
-      - name: Build on ${{ inputs.os }} with Java ${{ inputs.javaVersion }}
-        run: mvn clean install '-Pjakarta-staging'
-      - name: Upload surefire reports
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: surefire-reports
-          path: '**/surefire-reports/*'
-      - name: Upload server logs
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: server-logs
-          path: '**/*.log'
+    - continue-on-error: true
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      name: Set up JDK ${{ inputs.javaVersion }}
+      uses: actions/setup-java@v4
+      with:
+        cache: maven
+        distribution: temurin
+        java-version: ${{ inputs.javaVersion }}
+    - continue-on-error: true
+      name: Build on ${{ inputs.os }} with Java ${{ inputs.javaVersion }}
+      run: mvn clean install '-Pjakarta-staging'
+    - continue-on-error: true
+      if: failure()
+      name: Upload surefire reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: surefire-reports
+        path: '**/surefire-reports/*'
+    - continue-on-error: true
+      if: failure()
+      name: Upload server logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: server-logs
+        path: '**/*.log'
+name: Manual RESTEasy Build
+on:
+  repository_dispatch:
+    types: trigger-ga___manual-build.yml
